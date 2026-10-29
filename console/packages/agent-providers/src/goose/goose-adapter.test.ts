@@ -62,7 +62,17 @@ it('has the expected basic properties', () => {
   expect(gooseAcp.label).toBe('Goose');
   expect(gooseAcp.defaultBinary).toBe('goose');
   expect(gooseAcp.loginCommand).toBe('goose configure');
-  expect(gooseAcp.inheritEnv).toEqual(['GOOSE_PROVIDER', 'GOOSE_MODEL']);
+  expect(gooseAcp.inheritEnv).toEqual([
+    'GOOSE_PROVIDER',
+    'GOOSE_MODEL',
+    'GOOGLE_API_KEY',
+    'GEMINI_API_KEY',
+    'OPENAI_API_KEY',
+    'ANTHROPIC_API_KEY',
+    'GROQ_API_KEY',
+    'OPENROUTER_API_KEY',
+    'OLLAMA_HOST',
+  ]);
   expect(gooseAcp.promptCapabilities?.image).toBe(true);
 });
 

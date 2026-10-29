@@ -9,14 +9,18 @@ export const GOOSE_LOGIN = 'goose configure';
  * Parses `goose info` output to determine configuration / readiness.
  */
 export function parseGooseInfo(output: string): ProviderReadiness {
-  if (/no provider configured|not configured|please configure|run goose configure/i.test(output))
+  if (
+    /no provider configured|not configured|please configure|run goose configure|configuration value not found|no model configured/i.test(
+      output
+    )
+  )
     return readiness('unauthenticated', signInWith(GOOSE_LOGIN));
 
   const provider = output.match(/Active Provider(?:[ \t]*:[ \t]*|[ \t]+)(.+)/i)?.[1]?.trim();
   if (provider && !/none|null|disabled|not configured/i.test(provider))
     return readiness('authenticated', `Configured with ${provider}.`);
 
-  if (/-\s*([a-zA-Z0-9_-]+):\s*Enabled/i.test(output))
+  if (/goose is ready|-\s*([a-zA-Z0-9_-]+):\s*Enabled/i.test(output))
     return readiness('authenticated', 'Configured.');
 
   return readiness('unauthenticated', signInWith(GOOSE_LOGIN));
@@ -40,17 +44,34 @@ export const gooseAcp: AcpProviderHooks = {
     env,
   }),
   loginCommand: GOOSE_LOGIN,
-  inheritEnv: ['GOOSE_PROVIDER', 'GOOSE_MODEL'],
+  inheritEnv: [
+    'GOOSE_PROVIDER',
+    'GOOSE_MODEL',
+    'GOOGLE_API_KEY',
+    'GEMINI_API_KEY',
+    'OPENAI_API_KEY',
+    'ANTHROPIC_API_KEY',
+    'GROQ_API_KEY',
+    'OPENROUTER_API_KEY',
+    'OLLAMA_HOST',
+  ],
   checkSignIn: async ({ binaryPath, cwd, env }) => {
     if (env.GOOSE_PROVIDER?.trim())
       return readiness('authenticated', 'Configured with the GOOSE_PROVIDER environment variable.');
+    if (
+      env.GOOGLE_API_KEY?.trim() ||
+      env.GEMINI_API_KEY?.trim() ||
+      env.OPENAI_API_KEY?.trim() ||
+      env.ANTHROPIC_API_KEY?.trim()
+    )
+      return readiness('authenticated', 'Configured with API key in environment.');
     let output: string;
     try {
       output = (
-        await execProvider(binaryPath, ['info'], {
+        await execProvider(binaryPath, ['doctor'], {
           cwd,
           env,
-          timeout: 15000,
+          timeout: 4000,
           maxBuffer: 1024 * 1024,
         })
       ).stdout;
