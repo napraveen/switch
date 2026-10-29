@@ -1,4 +1,6 @@
 import type * as fs from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { FakeAppServer } from '../codex/fake-app-server';
 import type { ProviderRuntimeEvent } from '../events';
@@ -96,11 +98,22 @@ it('checks sign-in using FACTORY_API_KEY environment variable when present', asy
   expect(result.message).toContain('Factory API key');
 });
 
+it('checks sign-in using auth.v2.keyring when present', async () => {
+  const result = await droidAcp.checkSignIn!({
+    binaryPath: 'droid',
+    cwd: '/work',
+    env: { FACTORY_HOME: join(homedir(), '.factory') },
+    handshake: async () => ({}),
+  });
+  expect(result.status).toBe('authenticated');
+  expect(result.message).toBe('Signed in.');
+});
+
 it('checks sign-in via handshake when authMethods is returned', async () => {
   const result = await droidAcp.checkSignIn!({
     binaryPath: 'droid',
     cwd: '/work',
-    env: {},
+    env: { FACTORY_HOME: '/nonexistent' },
     handshake: async () => ({
       authMethods: [{ id: 'browser', name: 'Browser OAuth' }],
     }),
@@ -113,7 +126,7 @@ it('checks sign-in via handshake when authenticated', async () => {
   const result = await droidAcp.checkSignIn!({
     binaryPath: 'droid',
     cwd: '/work',
-    env: {},
+    env: { FACTORY_HOME: '/nonexistent' },
     handshake: async () => ({
       authMethods: [],
     }),
@@ -126,7 +139,7 @@ it('catches auth error in handshake and returns unauthenticated', async () => {
   const result = await droidAcp.checkSignIn!({
     binaryPath: 'droid',
     cwd: '/work',
-    env: {},
+    env: { FACTORY_HOME: '/nonexistent' },
     handshake: async () => {
       throw new Error('User is unauthenticated');
     },
@@ -140,7 +153,7 @@ it('rethrows non-auth errors during handshake', async () => {
     droidAcp.checkSignIn!({
       binaryPath: 'droid',
       cwd: '/work',
-      env: {},
+      env: { FACTORY_HOME: '/nonexistent' },
       handshake: async () => {
         throw new Error('Connection refused');
       },

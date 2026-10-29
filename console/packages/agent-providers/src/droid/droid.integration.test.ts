@@ -10,17 +10,8 @@ describeConformance('droid', {
     if (probe.error || probe.status !== 0) {
       return 'the droid binary is not on PATH';
     }
-    try {
-      const readiness = await checkAcpSignIn(droidAcp, {
-        binaryPath: 'droid',
-        cwd: process.cwd(),
-        env: process.env as Record<string, string>,
-      });
-      if (readiness.status !== 'authenticated') {
-        return `Factory Droid is not signed in (${readiness.message})`;
-      }
-    } catch {
-      return 'Factory Droid is not signed in';
+    if (!process.env.FACTORY_API_KEY) {
+      return 'FACTORY_API_KEY is not set';
     }
     return null;
   },
